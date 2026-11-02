@@ -1,4 +1,8 @@
-const GEOJSON_URL = "https://cdn.jsdelivr.net/gh/wmgeolab/geoBoundaries@9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson";
+// Резервные ссылки на файл карты (если одна не работает, сработает другая)
+const URLS = [
+  "https://cdn.jsdelivr.net/gh/wmgeolab/geoBoundaries@9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
+  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson"
+];
 
 const mapEl = document.getElementById("map");
 const panel = document.getElementById("panel");
@@ -8,50 +12,63 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-// ---------- Загрузка карты ----------
-d3.json(GEOJSON_URL).then((geojson) => {
-  drawMap(geojson);
-}).catch((err) => {
-  mapEl.innerHTML =
-    '<p style="padding:2rem;color:#9aa0a6">Не удалось загрузить карту. Проверьте подключение к интернету.</p>';
-  console.error(err);
-});
+// Показываем надпись "Загрузка", чтобы было понятно, что процесс идет
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты... Подождите.</p>';
 
-function drawMap(geojson) {
-  const width = mapEl.clientWidth;
-  const height = mapEl.clientHeight;
-
-  const svg = d3
-    .select("#map")
-    .append("svg")
-    .attr("viewBox", `0 0 ${width} ${height}`)
-    .attr("preserveAspectRatio", "xMidYMid meet");
-
-  const projection = d3
-    .geoMercator()
-    .fitSize([width, height], geojson);
-
-  const path = d3.geoPath().projection(projection);
-
-  svg
-    .selectAll("path")
-    .data(geojson.features)
-    .join("path")
-    .attr("class", "region-path")
-    .attr("d", path)
-    .on("click", function (event, feature) {
-      selectRegion(feature, this);
-    });
-
-  // Подписи для очень крупных регионов можно добавить позже
+// Функция для попытки загрузки
+async function loadMap() {
+  for (let url of URLS) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) continue; // Если ошибка - пробуем следующую ссылку
+      const geojson = await response.json();
+      mapEl.innerHTML = ''; // Убираем надпись "Загрузка"
+      drawMap(geojson);
+      return; // Успех! Выходим из функции
+    } catch (e) {
+      console.warn("Не удалось загрузить по ссылке: " + url);
+    }
+  }
+  // Если все ссылки не сработали
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Попробуйте обновить страницу позже.</p>';
 }
 
-// ---------- Клик по региону ----------
+loadMap();
+
+function drawMap(geojson) {
+  // Небольшая задержка, чтобы браузер точно рассчитал размеры блока
+  setTimeout(() => {
+    const width = mapEl.clientWidth || 800;
+    const height = mapEl.clientHeight || 600;
+
+    const svg = d3
+      .select("#map")
+      .append("svg")
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet");
+
+    const projection = d3
+      .geoMercator()
+      .fitSize([width - 20, height - 20], geojson);
+
+    const path = d3.geoPath().projection(projection);
+
+    svg
+      .selectAll("path")
+      .data(geojson.features)
+      .join("path")
+      .attr("class", "region-path")
+      .attr("d", path)
+      .on("click", function (event, feature) {
+        selectRegion(feature, this);
+      });
+  }, 100); // 100 миллисекунд задержки
+}
+
 function selectRegion(feature, pathElement) {
   const name = feature.properties.shapeName || "Неизвестный регион";
   const data = findRegionData(name);
 
-  // Подсветка
   if (activePath) activePath.classList.remove("active");
   pathElement.classList.add("active");
   activePath = pathElement;
@@ -61,36 +78,25 @@ function selectRegion(feature, pathElement) {
 }
 
 function findRegionData(name) {
+  if (typeof REGION_DATA === "undefined") return null;
   if (REGION_DATA[name]) return REGION_DATA[name];
 
-  // Нормализация: убираем лишние пробелы, скобки, меняем «—» на «-»
-  const normalized = name
-    .toLowerCase()
-    .replace(/[—–]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
+  const normalized = name.toLowerCase().replace(/[—–]/g, "-").replace(/\s+/g, " ").trim();
 
   for (const key of Object.keys(REGION_DATA)) {
-    const keyNorm = key
-      .toLowerCase()
-      .replace(/[—–]/g, "-")
-      .replace(/\s+/g, " ")
-      .trim();
+    const keyNorm = key.toLowerCase().replace(/[—–]/g, "-").replace(/\s+/g, " ").trim();
     if (keyNorm === normalized) return REGION_DATA[key];
   }
 
-  // Частичное совпадение (например, «Саха (Якутия)» vs «Республика Саха (Якутия)»)
   for (const key of Object.keys(REGION_DATA)) {
     const keyNorm = key.toLowerCase().replace(/[—–]/g, "-");
     if (keyNorm.includes(normalized) || normalized.includes(keyNorm)) {
       return REGION_DATA[key];
     }
   }
-
   return null;
 }
 
-// ---------- Рендер панели ----------
 function renderPanel(name, data) {
   if (!data) {
     panelContent.innerHTML = `
@@ -102,22 +108,10 @@ function renderPanel(name, data) {
     return;
   }
 
-  const population = data.population
-    ? formatNumber(data.population) + " чел."
-    : "—";
-
-  const area = data.area
-    ? formatNumber(data.area) + " км²"
-    : "—";
-
-  const density =
-    data.population && data.area
-      ? (data.population / data.area).toFixed(1) + " чел./км²"
-      : "—";
-
-  const gdp = data.gdp
-    ? formatNumber(data.gdp) + " млрд ₽"
-    : "—";
+  const population = data.population ? formatNumber(data.population) + " чел." : "—";
+  const area = data.area ? formatNumber(data.area) + " км²" : "—";
+  const density = data.population && data.area ? (data.population / data.area).toFixed(1) + " чел./км²" : "—";
+  const gdp = data.gdp ? formatNumber(data.gdp) + " млрд ₽" : "—";
 
   panelContent.innerHTML = `
     <h2>${escapeHtml(name)}</h2>
@@ -175,38 +169,14 @@ function closePanel() {
   }
 }
 
-// ---------- Утилиты ----------
 function formatNumber(n) {
   return new Intl.NumberFormat("ru-RU").format(n);
 }
 
 function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// ---------- События ----------
 closeBtn.addEventListener("click", closePanel);
 overlay.addEventListener("click", closePanel);
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closePanel();
-});
-
-// Перерисовка при ресайзе (простая)
-let resizeTimer;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    const svg = document.querySelector("#map svg");
-    if (!svg) return;
-    const width = mapEl.clientWidth;
-    const height = mapEl.clientHeight;
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    // Перепроецировать без перезагрузки данных сложно, поэтому просто оставляем viewBox.
-    // При сильном ресайзе можно перезагрузить страницу — для одностраничника это приемлемо.
-  }, 250);
-});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePanel(); });
