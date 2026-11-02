@@ -1,10 +1,3 @@
-// Сначала ищем локальный файл, затем два резервных сервера
-const URLS = [
-  "data/russia.geojson",
-  "https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/russia.json",
-  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson"
-];
-
 const mapEl = document.getElementById("map");
 const panel = document.getElementById("panel");
 const panelContent = document.getElementById("panel-content");
@@ -13,46 +6,36 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты... Пожалуйста, подождите.</p>';
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-async function loadMap() {
-  for (let url of URLS) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) continue;
-      const text = await response.text();
-      const geojson = JSON.parse(text);
-      mapEl.innerHTML = '';
-      drawMap(geojson);
-      return; 
-    } catch (e) {
-      console.warn("Не удалось загрузить: " + url);
-    }
-  }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Убедитесь, что файл russia.geojson лежит в папке data.</p>';
-}
-
-loadMap();
+// Берем карту из вашей же папки data
+fetch("data/russia.json")
+  .then(response => {
+    if (!response.ok) throw new Error("Файл не найден");
+    return response.json();
+  })
+  .then(geojson => {
+    mapEl.innerHTML = '';
+    drawMap(geojson);
+  })
+  .catch(err => {
+    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки. Проверьте, что файл russia.json лежит в папке data.</p>';
+    console.error(err);
+  });
 
 function drawMap(geojson) {
   setTimeout(() => {
     const width = mapEl.clientWidth || 800;
     const height = mapEl.clientHeight || 600;
 
-    const svg = d3
-      .select("#map")
-      .append("svg")
+    const svg = d3.select("#map").append("svg")
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    const projection = d3
-      .geoMercator()
-      .fitSize([width - 20, height - 20], geojson);
-
+    const projection = d3.geoMercator().fitSize([width - 20, height - 20], geojson);
     const path = d3.geoPath().projection(projection);
 
-    svg
-      .selectAll("path")
+    svg.selectAll("path")
       .data(geojson.features)
       .join("path")
       .attr("class", "region-path")
@@ -64,12 +47,7 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  let name = feature.properties.shapeName || feature.properties.name || feature.properties.NAME || "Неизвестный регион";
-  
-  // Если пришло английское название из резервного файла ECharts, переводим основные
-  const engMap = { "Moscow": "Москва", "Saint Petersburg": "Санкт-Петербург" };
-  if (engMap[name]) name = engMap[name];
-
+  const name = feature.properties.name || "Неизвестный регион";
   const data = findRegionData(name);
 
   if (activePath) activePath.classList.remove("active");
@@ -104,9 +82,7 @@ function renderPanel(name, data) {
   if (!data) {
     panelContent.innerHTML = `
       <h2>${escapeHtml(name)}</h2>
-      <p style="color:var(--text-dim);margin-top:1rem">
-        Данные по этому региону уточняются.
-      </p>
+      <p style="color:var(--text-dim);margin-top:1rem">Данные по этому региону уточняются.</p>
     `;
     return;
   }
