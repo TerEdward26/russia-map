@@ -1,4 +1,4 @@
-const GEOJSON_URL = "data/russia_map.geojson";
+const GEOJSON_URL = "https://cdn.jsdelivr.net/gh/wmgeolab/geoBoundaries@9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson";
 
 const mapEl = document.getElementById("map");
 const panel = document.getElementById("panel");
