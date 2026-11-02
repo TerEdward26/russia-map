@@ -8,7 +8,7 @@ let activePath = null;
 
 mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-// Прямые рабочие ссылки на GeoJSON с регионами РФ (с русскими названиями)
+// Ссылки на рабочие файлы карт
 const URLS = [
   "https://hub.mos.ru/gubinmaksim/true-russian-map/-/raw/main/rus_simple_highcharts.geo.json",
   "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
@@ -17,24 +17,19 @@ const URLS = [
 
 async function loadMap() {
   for (let url of URLS) {
-    console.log("⏳ Пробую загрузить карту по ссылке:", url);
     try {
       const response = await fetch(url);
-      console.log("📡 Ответ сервера:", response.status);
-      
       if (!response.ok) continue;
       
       const geojson = await response.json();
-      console.log("✅ Карта успешно загружена!");
-      
       mapEl.innerHTML = '';
       drawMap(geojson);
       return; 
     } catch (e) {
-      console.warn("❌ Ошибка при загрузке:", e.message);
+      console.warn("Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Снова 404. Ссылки снова оказались битыми.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты. Ссылки недоступны.</p>';
 }
 
 loadMap();
@@ -48,16 +43,12 @@ function drawMap(geojson) {
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // В файле rus_simple_highcharts.geo.json координаты уже спроецированы (в метрах),
-    // поэтому используем geoIdentity вместо geoMercator
-    let projection;
-    if (geojson.crs && geojson.crs.properties && geojson.crs.properties.name && geojson.crs.properties.name.includes("CRS84")) {
-      projection = d3.geoMercator().fitSize([width - 20, height - 20], geojson);
-    } else {
-      // Для спроецированных координат (например, EPSG:3857 / Highcharts)
-      projection = d3.geoIdentity().reflectY(true).fitSize([width - 20, height - 20], geojson);
-    }
-
+    // Жестко задаем отступы (по 40 пикселей), чтобы карта была по центру и на весь экран
+    const projection = d3.geoMercator().fitExtent(
+      [[40, 40], [width - 40, height - 40]], 
+      geojson
+    );
+    
     const path = d3.geoPath().projection(projection);
 
     svg.selectAll("path")
