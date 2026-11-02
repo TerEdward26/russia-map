@@ -18,7 +18,6 @@
     <div id="map"></div>
   </main>
 
-  <!-- Боковая панель -->
   <aside id="panel" class="panel hidden">
     <button id="close-panel" class="close-btn" aria-label="Закрыть">×</button>
     <div id="panel-content"></div>
@@ -26,6 +25,18 @@
 
   <div id="overlay" class="overlay hidden"></div>
 
+  <!-- СЮДА ЗАГРУЖАЕТСЯ КАРТА КАК СКРИПТ -->
+  <script>
+    // Создаем заглушку, чтобы перехватить данные карты и обойти блокировки
+    window.echarts = {
+      registerMap: function(name, data) {
+        window.MAP_DATA = data;
+      }
+    };
+  </script>
+  <!-- Загружаем карту как JS-файл с надежного сервера -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/russia.js"></script>
+  
   <script src="data/regions.js"></script>
   <script src="script.js"></script>
 </body>
