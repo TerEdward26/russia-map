@@ -6,19 +6,14 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-function initMap() {
-  // Проверяем, загрузилась ли карта из скрипта
+window.addEventListener('load', () => {
   if (!window.MAP_DATA) {
-    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты. Проверьте интернет.</p>';
+    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Отключите AdBlock или антивирус на этом сайте.</p>';
     return;
   }
-
   mapEl.innerHTML = '';
   drawMap(window.MAP_DATA);
-}
-
-// Ждем, пока страница полностью загрузится, и рисуем карту
-window.addEventListener('load', initMap);
+});
 
 function drawMap(geojson) {
   setTimeout(() => {
@@ -44,7 +39,6 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  // В этой карте названия уже на русском (например, "Москва", "Тверская область")
   const name = feature.properties.name || "Неизвестный регион";
   const data = findRegionData(name);
 
