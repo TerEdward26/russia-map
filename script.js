@@ -33,6 +33,16 @@ async function loadMap() {
 
 loadMap();
 
+// Функция для исправления кракозябр (Windows-1251 -> UTF-8)
+function fixEncoding(str) {
+  if (!str) return str;
+  try {
+    return decodeURIComponent(escape(str));
+  } catch (e) {
+    return str;
+  }
+}
+
 function drawMap(geojson) {
   setTimeout(() => {
     const width = mapEl.clientWidth || 800;
@@ -42,8 +52,6 @@ function drawMap(geojson) {
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // ФИКС: Поворачиваем проекцию на -100 градусов, чтобы Россия была по центру,
-    // а Камчатка не улетала в Америку.
     const projection = d3.geoMercator()
       .rotate([-100, 0]) 
       .fitExtent([[40, 40], [width - 40, height - 40]], geojson);
@@ -62,14 +70,20 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  const name = feature.properties.name || feature.properties.NAME_1 || "Неизвестный регион";
-  const data = findRegionData(name);
+  // Берем сырое название
+  let rawName = feature.properties.name || feature.properties.NAME_1 || "Неизвестный регион";
+  
+  // ИСПРАВЛЯЕМ КОДИРОВКУ
+  let fixedName = fixEncoding(rawName);
+  
+  // Ищем данные
+  const data = findRegionData(fixedName);
 
   if (activePath) activePath.classList.remove("active");
   pathElement.classList.add("active");
   activePath = pathElement;
 
-  renderPanel(name, data);
+  renderPanel(fixedName, data);
   openPanel();
 }
 
