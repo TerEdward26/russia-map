@@ -1,5 +1,4 @@
-const GEOJSON_URL =
-  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson";
+const GEOJSON_URL = "data/russia_map.geojson";
 
 const mapEl = document.getElementById("map");
 const panel = document.getElementById("panel");
