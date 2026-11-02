@@ -8,7 +8,6 @@ let activePath = null;
 
 mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-// Ссылки на рабочие файлы карт
 const URLS = [
   "https://hub.mos.ru/gubinmaksim/true-russian-map/-/raw/main/rus_simple_highcharts.geo.json",
   "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
@@ -29,7 +28,7 @@ async function loadMap() {
       console.warn("Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты. Ссылки недоступны.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты.</p>';
 }
 
 loadMap();
@@ -43,11 +42,11 @@ function drawMap(geojson) {
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // Жестко задаем отступы (по 40 пикселей), чтобы карта была по центру и на весь экран
-    const projection = d3.geoMercator().fitExtent(
-      [[40, 40], [width - 40, height - 40]], 
-      geojson
-    );
+    // ФИКС: Поворачиваем проекцию на -100 градусов, чтобы Россия была по центру,
+    // а Камчатка не улетала в Америку.
+    const projection = d3.geoMercator()
+      .rotate([-100, 0]) 
+      .fitExtent([[40, 40], [width - 40, height - 40]], geojson);
     
     const path = d3.geoPath().projection(projection);
 
