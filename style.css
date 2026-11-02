@@ -52,6 +52,7 @@ body {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
+  position: relative;
 }
 
 #map svg {
@@ -60,27 +61,27 @@ body {
   height: 100%;
 }
 
-/* Регионы */
+/* Стили для регионов на карте */
 .region-path {
-  fill: #2b3242;
-  stroke: #0f1115;
-  stroke-width: 0.6px;
+  fill: #2c3a4d; 
+  stroke: #1a2230; 
+  stroke-width: 0.5px;
   cursor: pointer;
   transition: fill 0.2s ease, filter 0.2s ease, transform 0.15s ease;
   transform-origin: center;
 }
 
 .region-path:hover {
-  fill: #3a4560;
-  filter: drop-shadow(0 0 6px rgba(110, 168, 254, 0.35));
+  fill: #4a6b92; 
+  filter: drop-shadow(0 0 8px rgba(110, 168, 254, 0.5));
 }
 
 .region-path.active {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 10px rgba(110, 168, 254, 0.6));
+  fill: #6ea8fe;
+  filter: drop-shadow(0 0 12px rgba(110, 168, 254, 0.8));
 }
 
-/* Панель */
+/* Панель с информацией */
 .panel {
   position: fixed;
   top: 0;
@@ -127,6 +128,7 @@ body {
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 0.25rem;
+  padding-right: 2rem;
 }
 
 .panel .region-type {
@@ -183,7 +185,7 @@ body {
 .info-row .info-label { color: var(--text-dim); }
 .info-row .info-value { text-align: right; }
 
-/* Оверлей */
+/* Затемнение фона при открытой панели */
 .overlay {
   position: fixed;
   inset: 0;
