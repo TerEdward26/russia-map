@@ -1,8 +1,8 @@
-// 3 разных сервера. Если один заблокирован, скрипт попробует следующий
+// Сначала ищем локальный файл, затем два резервных сервера
 const URLS = [
-  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
-  "https://cdn.jsdelivr.net/gh/wmgeolab/geoBoundaries@main/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
-  "https://code.highcharts.com/mapdata/countries/ru/ru-all.geo.json"
+  "data/russia.geojson",
+  "https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/russia.json",
+  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson"
 ];
 
 const mapEl = document.getElementById("map");
@@ -20,7 +20,8 @@ async function loadMap() {
     try {
       const response = await fetch(url);
       if (!response.ok) continue;
-      const geojson = await response.json();
+      const text = await response.text();
+      const geojson = JSON.parse(text);
       mapEl.innerHTML = '';
       drawMap(geojson);
       return; 
@@ -28,7 +29,7 @@ async function loadMap() {
       console.warn("Не удалось загрузить: " + url);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Все сервера недоступны.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Убедитесь, что файл russia.geojson лежит в папке data.</p>';
 }
 
 loadMap();
@@ -63,8 +64,12 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  // Берем название либо из shapeName (русское), либо из name (английское)
-  const name = feature.properties.shapeName || feature.properties.name || "Неизвестный регион";
+  let name = feature.properties.shapeName || feature.properties.name || feature.properties.NAME || "Неизвестный регион";
+  
+  // Если пришло английское название из резервного файла ECharts, переводим основные
+  const engMap = { "Moscow": "Москва", "Saint Petersburg": "Санкт-Петербург" };
+  if (engMap[name]) name = engMap[name];
+
   const data = findRegionData(name);
 
   if (activePath) activePath.classList.remove("active");
