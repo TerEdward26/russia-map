@@ -6,9 +6,10 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
+// Ждем загрузки страницы
 window.addEventListener('load', () => {
   if (!window.MAP_DATA) {
-    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Отключите AdBlock или антивирус на этом сайте.</p>';
+    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка. Карта не загрузилась. Выключите AdBlock на этом сайте.</p>';
     return;
   }
   mapEl.innerHTML = '';
