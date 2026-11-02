@@ -6,14 +6,13 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты... (смотрите консоль F12)</p>';
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-// Три ссылки на файлы карты. Если одна заблокирована, скрипт возьмет другую.
+// РАБОЧИЕ ссылки на карту России
 const URLS = [
-  "https://raw.githubusercontent.com/eu-geography/russia-geojson/master/russia.geojson",
-  "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/russia.json",
-  "https://cdn.jsdelivr.net/gh/eu-geography/russia-geojson@master/russia.geojson",
-  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json"
+  "https://raw.githubusercontent.com/georgique/world-geojson/master/areas/russia/russia.geojson",
+  "https://cdn.jsdelivr.net/gh/georgique/world-geojson@master/areas/russia/russia.geojson",
+  "https://raw.githubusercontent.com/Badenkov/geojson-russia/master/russia.geojson"
 ];
 
 async function loadMap() {
@@ -26,16 +25,16 @@ async function loadMap() {
       if (!response.ok) continue;
       
       const geojson = await response.json();
-      console.log("✅ Карта успешно загружена! Координаты получены.");
+      console.log("✅ Карта успешно загружена! Данные получены.");
       
       mapEl.innerHTML = '';
       drawMap(geojson);
       return; 
     } catch (e) {
-      console.warn("❌ Ошибка при загрузке этой ссылки:", e.message);
+      console.warn("❌ Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Все сервера с картой недоступны. Отключите AdBlock.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Все сервера вернули ошибку 404. Карта не найдена.</p>';
 }
 
 loadMap();
@@ -64,7 +63,8 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  const name = feature.properties.name || "Неизвестный регион";
+  // У этой карты названия регионов лежат в feature.properties.name
+  const name = feature.properties.name || feature.properties.NAME || "Неизвестный регион";
   const data = findRegionData(name);
 
   if (activePath) activePath.classList.remove("active");
