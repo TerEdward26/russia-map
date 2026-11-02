@@ -10,42 +10,40 @@ mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;"
 
 const URLS = [
   "https://hub.mos.ru/gubinmaksim/true-russian-map/-/raw/main/rus_simple_highcharts.geo.json",
-  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
-  "https://cdn.jsdelivr.net/gh/simp37/Russia_geoJSON@master/Russia.geojson"
+  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson"
 ];
 
-// Словарь: технический код региона -> нормальное русское название
-const KEY_TO_RUS = {
-  "ru-ad": "Республика Адыгея", "ru-al": "Республика Алтай", "ru-ba": "Республика Башкортостан",
-  "ru-bu": "Республика Бурятия", "ru-da": "Республика Дагестан", "ru-in": "Республика Ингушетия",
-  "ru-kb": "Кабардино-Балкарская Республика", "ru-kl": "Республика Калмыкия",
-  "ru-kc": "Карачаево-Черкесская Республика", "ru-kr": "Республика Карелия", "ru-ko": "Республика Коми",
-  "ru-cr": "Республика Крым", "ru-me": "Республика Марий Эл", "ru-mo": "Республика Мордовия",
-  "ru-sa": "Республика Саха (Якутия)", "ru-se": "Республика Северная Осетия - Алания",
-  "ru-ta": "Республика Татарстан", "ru-ty": "Республика Тыва", "ru-ud": "Удмуртская Республика",
-  "ru-kk": "Республика Хакасия", "ru-ce": "Чеченская Республика", "ru-cu": "Чувашская Республика",
-  "ru-alt": "Алтайский край", "ru-zab": "Забайкальский край", "ru-kam": "Камчатский край",
-  "ru-kda": "Краснодарский край", "ru-kya": "Красноярский край", "ru-per": "Пермский край",
-  "ru-pri": "Приморский край", "ru-sta": "Ставропольский край", "ru-kha": "Хабаровский край",
-  "ru-amu": "Амурская область", "ru-ark": "Архангельская область", "ru-ast": "Астраханская область",
-  "ru-bel": "Белгородская область", "ru-bry": "Брянская область", "ru-vla": "Владимирская область",
-  "ru-vgg": "Волгоградская область", "ru-vlg": "Вологодская область", "ru-vor": "Воронежская область",
-  "ru-iva": "Ивановская область", "ru-irk": "Иркутская область", "ru-kal": "Калининградская область",
-  "ru-klu": "Калужская область", "ru-kem": "Кемеровская область - Кузбасс", "ru-kir": "Кировская область",
-  "ru-kos": "Костромская область", "ru-kur": "Курганская область", "ru-krs": "Курская область",
-  "ru-len": "Ленинградская область", "ru-lip": "Липецкая область", "ru-mag": "Магаданская область",
-  "ru-mos": "Московская область", "ru-mur": "Мурманская область", "ru-niz": "Нижегородская область",
-  "ru-nov": "Новгородская область", "ru-nvs": "Новосибирская область", "ru-oms": "Омская область",
-  "ru-ore": "Оренбургская область", "ru-orl": "Орловская область", "ru-pen": "Пензенская область",
-  "ru-psm": "Псковская область", "ru-ros": "Ростовская область", "ru-rya": "Рязанская область",
-  "ru-sam": "Самарская область", "ru-sar": "Саратовская область", "ru-sak": "Сахалинская область",
-  "ru-sve": "Свердловская область", "ru-smo": "Смоленская область", "ru-tam": "Тамбовская область",
-  "ru-tve": "Тверская область", "ru-tom": "Томская область", "ru-tul": "Тульская область",
-  "ru-tyu": "Тюменская область", "ru-uly": "Ульяновская область", "ru-che": "Челябинская область",
-  "ru-yar": "Ярославская область", "ru-mow": "Москва", "ru-spe": "Санкт-Петербург",
-  "ru-sev": "Севастополь", "ru-yev": "Еврейская автономная область",
-  "ru-nen": "Ненецкий автономный округ", "ru-khm": "Ханты-Мансийский автономный округ - Югра",
-  "ru-chu": "Чукотский автономный округ", "ru-yan": "Ямало-Ненецкий автономный округ"
+const ENG_TO_RUS = {
+  "Adygea": "Республика Адыгея", "Altai": "Республика Алтай", "Bashkortostan": "Республика Башкортостан",
+  "Buryatia": "Республика Бурятия", "Dagestan": "Республика Дагестан", "Ingushetia": "Республика Ингушетия",
+  "Kabardino-Balkaria": "Кабардино-Балкарская Республика", "Kalmykia": "Республика Калмыкия",
+  "Karachay-Cherkessia": "Карачаево-Черкесская Республика", "Karelia": "Республика Карелия", "Komi": "Республика Коми",
+  "Crimea": "Республика Крым", "Mari El": "Республика Марий Эл", "Mordovia": "Республика Мордовия",
+  "Sakha": "Республика Саха (Якутия)", "North Ossetia": "Республика Северная Осетия - Алания",
+  "Tatarstan": "Республика Татарстан", "Tyva": "Республика Тыва", "Udmurtia": "Удмуртская Республика",
+  "Khakassia": "Республика Хакасия", "Chechnya": "Чеченская Республика", "Chuvashia": "Чувашская Республика",
+  "Altai Krai": "Алтайский край", "Zabaykalsky Krai": "Забайкальский край", "Kamchatka Krai": "Камчатский край",
+  "Krasnodar Krai": "Краснодарский край", "Krasnoyarsk Krai": "Красноярский край", "Perm Krai": "Пермский край",
+  "Primorsky Krai": "Приморский край", "Stavropol Krai": "Ставропольский край", "Khabarovsk Krai": "Хабаровский край",
+  "Amur Oblast": "Амурская область", "Arkhangelsk Oblast": "Архангельская область", "Astrakhan Oblast": "Астраханская область",
+  "Belgorod Oblast": "Белгородская область", "Bryansk Oblast": "Брянская область", "Vladimir Oblast": "Владимирская область",
+  "Volgograd Oblast": "Волгоградская область", "Vologda Oblast": "Вологодская область", "Voronezh Oblast": "Воронежская область",
+  "Ivanovo Oblast": "Ивановская область", "Irkutsk Oblast": "Иркутская область", "Kaliningrad Oblast": "Калининградская область",
+  "Kaluga Oblast": "Калужская область", "Kemerovo Oblast": "Кемеровская область - Кузбасс", "Kirov Oblast": "Кировская область",
+  "Kostroma Oblast": "Костромская область", "Kurgan Oblast": "Курганская область", "Kursk Oblast": "Курская область",
+  "Leningrad Oblast": "Ленинградская область", "Lipetsk Oblast": "Липецкая область", "Magadan Oblast": "Магаданская область",
+  "Moscow Oblast": "Московская область", "Murmansk Oblast": "Мурманская область", "Nizhny Novgorod Oblast": "Нижегородская область",
+  "Novgorod Oblast": "Новгородская область", "Novosibirsk Oblast": "Новосибирская область", "Omsk Oblast": "Омская область",
+  "Orenburg Oblast": "Оренбургская область", "Oryol Oblast": "Орловская область", "Penza Oblast": "Пензенская область",
+  "Pskov Oblast": "Псковская область", "Rostov Oblast": "Ростовская область", "Ryazan Oblast": "Рязанская область",
+  "Samara Oblast": "Самарская область", "Saratov Oblast": "Саратовская область", "Sakhalin Oblast": "Сахалинская область",
+  "Sverdlovsk Oblast": "Свердловская область", "Smolensk Oblast": "Смоленская область", "Tambov Oblast": "Тамбовская область",
+  "Tver Oblast": "Тверская область", "Tomsk Oblast": "Томская область", "Tula Oblast": "Тульская область",
+  "Tyumen Oblast": "Тюменская область", "Ulyanovsk Oblast": "Ульяновская область", "Chelyabinsk Oblast": "Челябинская область",
+  "Yaroslavl Oblast": "Ярославская область", "Moscow": "Москва", "Saint Petersburg": "Санкт-Петербург",
+  "Sevastopol": "Севастополь", "Jewish Autonomous Oblast": "Еврейская автономная область",
+  "Nenets Autonomous Okrug": "Ненецкий автономный округ", "Khanty-Mansiysk Autonomous Okrug": "Ханты-Мансийский автономный округ - Югра",
+  "Chukotka Autonomous Okrug": "Чукотский автономный округ", "Yamalo-Nenets Autonomous Okrug": "Ямало-Ненецкий автономный округ"
 };
 
 async function loadMap() {
@@ -54,7 +52,18 @@ async function loadMap() {
       const response = await fetch(url);
       if (!response.ok) continue;
       
-      const geojson = await response.json();
+      const buffer = await response.arrayBuffer();
+      // Читаем файл в правильной кодировке (Windows-1251)
+      let text = new TextDecoder('windows-1251').decode(buffer);
+      
+      let geojson;
+      try {
+        geojson = JSON.parse(text);
+      } catch (e) {
+        text = new TextDecoder('utf-8').decode(buffer);
+        geojson = JSON.parse(text);
+      }
+      
       mapEl.innerHTML = '';
       drawMap(geojson);
       return; 
@@ -94,16 +103,19 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  // Берем технический код региона (например, ru-mow)
-  const key = feature.properties["hc-key"] || feature.properties.id || "";
+  let name = "Неизвестный регион";
+  const props = feature.properties;
   
-  // Ищем нормальное русское название по этому коду
-  let name = KEY_TO_RUS[key];
+  // Берем русское название
+  let rawName = props.name || props.NAME || props.NAME_1 || "";
   
-  // Если код неизвестен, пробуем взять хоть что-то
-  if (!name) {
-    const rawName = feature.properties.name || feature.properties.NAME_1 || "Неизвестный регион";
-    name = rawName.includes("?") ? "Регион (" + key + ")" : rawName;
+  if (rawName && !rawName.includes("?")) {
+    // Если название русское, используем его
+    if (ENG_TO_RUS[rawName]) {
+      name = ENG_TO_RUS[rawName];
+    } else {
+      name = rawName;
+    }
   }
 
   const data = findRegionData(name);
