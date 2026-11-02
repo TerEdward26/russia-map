@@ -10,9 +10,10 @@ mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;"
 
 // Три ссылки на файлы карты. Если одна заблокирована, скрипт возьмет другую.
 const URLS = [
-  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json",
-  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
-  "https://cdnjs.cloudflare.com/ajax/libs/echarts/4.9.0/map/json/russia.json" // Резерв
+  "https://raw.githubusercontent.com/eu-geography/russia-geojson/master/russia.geojson",
+  "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/russia.json",
+  "https://cdn.jsdelivr.net/gh/eu-geography/russia-geojson@master/russia.geojson",
+  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json"
 ];
 
 async function loadMap() {
