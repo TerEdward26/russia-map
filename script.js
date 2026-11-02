@@ -6,15 +6,38 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-// Ждем загрузки страницы
-window.addEventListener('load', () => {
-  if (!window.MAP_DATA) {
-    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка. Карта не загрузилась. Выключите AdBlock на этом сайте.</p>';
-    return;
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты... (смотрите консоль F12)</p>';
+
+// Три ссылки на файлы карты. Если одна заблокирована, скрипт возьмет другую.
+const URLS = [
+  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json",
+  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
+  "https://cdnjs.cloudflare.com/ajax/libs/echarts/4.9.0/map/json/russia.json" // Резерв
+];
+
+async function loadMap() {
+  for (let url of URLS) {
+    console.log("⏳ Пробую загрузить карту по ссылке:", url);
+    try {
+      const response = await fetch(url);
+      console.log("📡 Ответ сервера:", response.status);
+      
+      if (!response.ok) continue;
+      
+      const geojson = await response.json();
+      console.log("✅ Карта успешно загружена! Координаты получены.");
+      
+      mapEl.innerHTML = '';
+      drawMap(geojson);
+      return; 
+    } catch (e) {
+      console.warn("❌ Ошибка при загрузке этой ссылки:", e.message);
+    }
   }
-  mapEl.innerHTML = '';
-  drawMap(window.MAP_DATA);
-});
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Все сервера с картой недоступны. Отключите AdBlock.</p>';
+}
+
+loadMap();
 
 function drawMap(geojson) {
   setTimeout(() => {
@@ -61,13 +84,6 @@ function findRegionData(name) {
     const keyNorm = key.toLowerCase().replace(/[—–]/g, "-").replace(/\s+/g, " ").trim();
     if (keyNorm === normalized) return REGION_DATA[key];
   }
-  
-  for (const key of Object.keys(REGION_DATA)) {
-    const keyNorm = key.toLowerCase().replace(/[—–]/g, "-");
-    if (keyNorm.includes(normalized) || normalized.includes(keyNorm)) {
-      return REGION_DATA[key];
-    }
-  }
   return null;
 }
 
@@ -75,7 +91,7 @@ function renderPanel(name, data) {
   if (!data) {
     panelContent.innerHTML = `
       <h2>${escapeHtml(name)}</h2>
-      <p style="color:var(--text-dim);margin-top:1rem">Данные по этому региону уточняются.</p>
+      <p style="color:var(--text-dim);margin-top:1rem">Данные уточняются.</p>
     `;
     return;
   }
@@ -83,7 +99,6 @@ function renderPanel(name, data) {
   const population = data.population ? formatNumber(data.population) + " чел." : "—";
   const area = data.area ? formatNumber(data.area) + " км²" : "—";
   const density = data.population && data.area ? (data.population / data.area).toFixed(1) + " чел./км²" : "—";
-  const gdp = data.gdp ? formatNumber(data.gdp) + " млрд ₽" : "—";
 
   panelContent.innerHTML = `
     <h2>${escapeHtml(name)}</h2>
@@ -92,11 +107,9 @@ function renderPanel(name, data) {
       <div class="stat-card"><div class="label">Население</div><div class="value">${population}</div></div>
       <div class="stat-card"><div class="label">Площадь</div><div class="value">${area}</div></div>
       <div class="stat-card"><div class="label">Плотность</div><div class="value">${density}</div></div>
-      <div class="stat-card"><div class="label">ВРП</div><div class="value">${gdp}</div></div>
     </div>
     <div class="info-row"><span class="info-label">Административный центр</span><span class="info-value">${escapeHtml(data.capital || "—")}</span></div>
     <div class="info-row"><span class="info-label">Федеральный округ</span><span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span></div>
-    <div class="info-row"><span class="info-label">Часовой пояс</span><span class="info-value">${escapeHtml(data.timezone || "—")}</span></div>
     <div class="info-row"><span class="info-label">Основной закон</span><span class="info-value">${escapeHtml(data.law || "—")}</span></div>
   `;
 }
