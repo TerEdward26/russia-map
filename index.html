@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Регионы России — интерактивная карта</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <h1>Регионы России</h1>
+    <p>Нажмите на регион, чтобы узнать подробности</p>
+  </header>
+
+  <main class="map-wrap">
+    <div id="map"></div>
+  </main>
+
+  <!-- Боковая панель -->
+  <aside id="panel" class="panel hidden">
+    <button id="close-panel" class="close-btn" aria-label="Закрыть">×</button>
+    <div id="panel-content"></div>
+  </aside>
+
+  <div id="overlay" class="overlay hidden"></div>
+
+  <script src="data/regions.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
