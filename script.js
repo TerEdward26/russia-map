@@ -8,11 +8,11 @@ let activePath = null;
 
 mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-// РАБОЧИЕ ссылки на карту России
+// Прямые рабочие ссылки на GeoJSON с регионами РФ (с русскими названиями)
 const URLS = [
-  "https://raw.githubusercontent.com/georgique/world-geojson/master/areas/russia/russia.geojson",
-  "https://cdn.jsdelivr.net/gh/georgique/world-geojson@master/areas/russia/russia.geojson",
-  "https://raw.githubusercontent.com/Badenkov/geojson-russia/master/russia.geojson"
+  "https://hub.mos.ru/gubinmaksim/true-russian-map/-/raw/main/rus_simple_highcharts.geo.json",
+  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
+  "https://cdn.jsdelivr.net/gh/simp37/Russia_geoJSON@master/Russia.geojson"
 ];
 
 async function loadMap() {
@@ -25,7 +25,7 @@ async function loadMap() {
       if (!response.ok) continue;
       
       const geojson = await response.json();
-      console.log("✅ Карта успешно загружена! Данные получены.");
+      console.log("✅ Карта успешно загружена!");
       
       mapEl.innerHTML = '';
       drawMap(geojson);
@@ -34,7 +34,7 @@ async function loadMap() {
       console.warn("❌ Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Все сервера вернули ошибку 404. Карта не найдена.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Снова 404. Ссылки снова оказались битыми.</p>';
 }
 
 loadMap();
@@ -48,7 +48,16 @@ function drawMap(geojson) {
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    const projection = d3.geoMercator().fitSize([width - 20, height - 20], geojson);
+    // В файле rus_simple_highcharts.geo.json координаты уже спроецированы (в метрах),
+    // поэтому используем geoIdentity вместо geoMercator
+    let projection;
+    if (geojson.crs && geojson.crs.properties && geojson.crs.properties.name && geojson.crs.properties.name.includes("CRS84")) {
+      projection = d3.geoMercator().fitSize([width - 20, height - 20], geojson);
+    } else {
+      // Для спроецированных координат (например, EPSG:3857 / Highcharts)
+      projection = d3.geoIdentity().reflectY(true).fitSize([width - 20, height - 20], geojson);
+    }
+
     const path = d3.geoPath().projection(projection);
 
     svg.selectAll("path")
@@ -63,8 +72,7 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  // У этой карты названия регионов лежат в feature.properties.name
-  const name = feature.properties.name || feature.properties.NAME || "Неизвестный регион";
+  const name = feature.properties.name || feature.properties.NAME_1 || "Неизвестный регион";
   const data = findRegionData(name);
 
   if (activePath) activePath.classList.remove("active");
@@ -85,6 +93,13 @@ function findRegionData(name) {
     const keyNorm = key.toLowerCase().replace(/[—–]/g, "-").replace(/\s+/g, " ").trim();
     if (keyNorm === normalized) return REGION_DATA[key];
   }
+  
+  for (const key of Object.keys(REGION_DATA)) {
+    const keyNorm = key.toLowerCase().replace(/[—–]/g, "-");
+    if (keyNorm.includes(normalized) || normalized.includes(keyNorm)) {
+      return REGION_DATA[key];
+    }
+  }
   return null;
 }
 
@@ -92,7 +107,7 @@ function renderPanel(name, data) {
   if (!data) {
     panelContent.innerHTML = `
       <h2>${escapeHtml(name)}</h2>
-      <p style="color:var(--text-dim);margin-top:1rem">Данные уточняются.</p>
+      <p style="color:var(--text-dim);margin-top:1rem">Данные по этому региону уточняются.</p>
     `;
     return;
   }
