@@ -1,7 +1,8 @@
-// Резервные ссылки на файл карты (если одна не работает, сработает другая)
+// 3 разных сервера. Если один заблокирован, скрипт попробует следующий
 const URLS = [
-  "https://cdn.jsdelivr.net/gh/wmgeolab/geoBoundaries@9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
-  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson"
+  "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
+  "https://cdn.jsdelivr.net/gh/wmgeolab/geoBoundaries@main/releaseData/gbHumanitarian/RUS/ADM1/geoBoundaries-RUS-ADM1_simplified.geojson",
+  "https://code.highcharts.com/mapdata/countries/ru/ru-all.geo.json"
 ];
 
 const mapEl = document.getElementById("map");
@@ -12,31 +13,27 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-// Показываем надпись "Загрузка", чтобы было понятно, что процесс идет
-mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты... Подождите.</p>';
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты... Пожалуйста, подождите.</p>';
 
-// Функция для попытки загрузки
 async function loadMap() {
   for (let url of URLS) {
     try {
       const response = await fetch(url);
-      if (!response.ok) continue; // Если ошибка - пробуем следующую ссылку
+      if (!response.ok) continue;
       const geojson = await response.json();
-      mapEl.innerHTML = ''; // Убираем надпись "Загрузка"
+      mapEl.innerHTML = '';
       drawMap(geojson);
-      return; // Успех! Выходим из функции
+      return; 
     } catch (e) {
-      console.warn("Не удалось загрузить по ссылке: " + url);
+      console.warn("Не удалось загрузить: " + url);
     }
   }
-  // Если все ссылки не сработали
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Попробуйте обновить страницу позже.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Не удалось загрузить карту. Все сервера недоступны.</p>';
 }
 
 loadMap();
 
 function drawMap(geojson) {
-  // Небольшая задержка, чтобы браузер точно рассчитал размеры блока
   setTimeout(() => {
     const width = mapEl.clientWidth || 800;
     const height = mapEl.clientHeight || 600;
@@ -62,11 +59,12 @@ function drawMap(geojson) {
       .on("click", function (event, feature) {
         selectRegion(feature, this);
       });
-  }, 100); // 100 миллисекунд задержки
+  }, 100);
 }
 
 function selectRegion(feature, pathElement) {
-  const name = feature.properties.shapeName || "Неизвестный регион";
+  // Берем название либо из shapeName (русское), либо из name (английское)
+  const name = feature.properties.shapeName || feature.properties.name || "Неизвестный регион";
   const data = findRegionData(name);
 
   if (activePath) activePath.classList.remove("active");
@@ -87,7 +85,7 @@ function findRegionData(name) {
     const keyNorm = key.toLowerCase().replace(/[—–]/g, "-").replace(/\s+/g, " ").trim();
     if (keyNorm === normalized) return REGION_DATA[key];
   }
-
+  
   for (const key of Object.keys(REGION_DATA)) {
     const keyNorm = key.toLowerCase().replace(/[—–]/g, "-");
     if (keyNorm.includes(normalized) || normalized.includes(keyNorm)) {
@@ -116,66 +114,23 @@ function renderPanel(name, data) {
   panelContent.innerHTML = `
     <h2>${escapeHtml(name)}</h2>
     <span class="region-type">${escapeHtml(data.type || "Регион")}</span>
-
     <div class="stat-grid">
-      <div class="stat-card">
-        <div class="label">Население</div>
-        <div class="value">${population}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Площадь</div>
-        <div class="value">${area}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Плотность</div>
-        <div class="value">${density}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">ВРП</div>
-        <div class="value">${gdp}</div>
-      </div>
+      <div class="stat-card"><div class="label">Население</div><div class="value">${population}</div></div>
+      <div class="stat-card"><div class="label">Площадь</div><div class="value">${area}</div></div>
+      <div class="stat-card"><div class="label">Плотность</div><div class="value">${density}</div></div>
+      <div class="stat-card"><div class="label">ВРП</div><div class="value">${gdp}</div></div>
     </div>
-
-    <div class="info-row">
-      <span class="info-label">Административный центр</span>
-      <span class="info-value">${escapeHtml(data.capital || "—")}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Федеральный округ</span>
-      <span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Часовой пояс</span>
-      <span class="info-value">${escapeHtml(data.timezone || "—")}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Основной закон</span>
-      <span class="info-value">${escapeHtml(data.law || "—")}</span>
-    </div>
+    <div class="info-row"><span class="info-label">Административный центр</span><span class="info-value">${escapeHtml(data.capital || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Федеральный округ</span><span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Часовой пояс</span><span class="info-value">${escapeHtml(data.timezone || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Основной закон</span><span class="info-value">${escapeHtml(data.law || "—")}</span></div>
   `;
 }
 
-function openPanel() {
-  panel.classList.remove("hidden");
-  overlay.classList.remove("hidden");
-}
-
-function closePanel() {
-  panel.classList.add("hidden");
-  overlay.classList.add("hidden");
-  if (activePath) {
-    activePath.classList.remove("active");
-    activePath = null;
-  }
-}
-
-function formatNumber(n) {
-  return new Intl.NumberFormat("ru-RU").format(n);
-}
-
-function escapeHtml(str) {
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
+function openPanel() { panel.classList.remove("hidden"); overlay.classList.remove("hidden"); }
+function closePanel() { panel.classList.add("hidden"); overlay.classList.add("hidden"); if (activePath) { activePath.classList.remove("active"); activePath = null; } }
+function formatNumber(n) { return new Intl.NumberFormat("ru-RU").format(n); }
+function escapeHtml(str) { return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 closeBtn.addEventListener("click", closePanel);
 overlay.addEventListener("click", closePanel);
