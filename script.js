@@ -8,8 +8,11 @@ let activePath = null;
 
 mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
+// Три надежных сервера
 const URLS = [
-  "https://hub.mos.ru/gubinmaksim/true-russian-map/-/raw/main/rus_simple_highcharts.geo.json"
+  "https://code.highcharts.com/mapdata/countries/ru/ru-all.geo.json",
+  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
+  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json"
 ];
 
 // Словарь: технический код региона -> нормальное русское название
@@ -60,7 +63,7 @@ async function loadMap() {
       console.warn("Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Все сервера с картой недоступны. Попробуйте обновить страницу.</p>';
 }
 
 loadMap();
@@ -94,16 +97,23 @@ function drawMap(geojson) {
 function selectRegion(feature, pathElement) {
   const props = feature.properties;
   
-  // Ищем технический код региона (например, RU-MOW)
+  // Пытаемся найти технический код (Highcharts использует hc-key)
   let rawId = feature.id || props.id || props["hc-key"] || "";
   rawId = rawId.toUpperCase();
 
-  // Переводим код в русское название
   let name = KEY_TO_RUS[rawId];
   
-  // Если код не найден, ставим заглушку
+  // Если кода нет, пробуем взять обычное имя
   if (!name) {
-    name = "Регион (" + rawId + ")";
+    let rawName = props.name || props.NAME || props.NAME_1 || "";
+    if (rawName && !rawName.includes("?")) {
+      name = rawName;
+    }
+  }
+
+  // Если совсем ничего не нашли
+  if (!name) {
+    name = "Регион (" + (rawId || "без кода") + ")";
   }
 
   const data = findRegionData(name);
