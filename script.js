@@ -8,45 +8,43 @@ let activePath = null;
 
 mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-// Три надежных сервера
 const URLS = [
   "https://code.highcharts.com/mapdata/countries/ru/ru-all.geo.json",
-  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
-  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json"
+  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson"
 ];
 
-// Словарь: технический код региона -> нормальное русское название
-const KEY_TO_RUS = {
-  "RU-AD": "Республика Адыгея", "RU-AL": "Республика Алтай", "RU-BA": "Республика Башкортостан",
-  "RU-BU": "Республика Бурятия", "RU-DA": "Республика Дагестан", "RU-IN": "Республика Ингушетия",
-  "RU-KB": "Кабардино-Балкарская Республика", "RU-KL": "Республика Калмыкия",
-  "RU-KC": "Карачаево-Черкесская Республика", "RU-KR": "Республика Карелия", "RU-KO": "Республика Коми",
-  "RU-CR": "Республика Крым", "RU-ME": "Республика Марий Эл", "RU-MO": "Республика Мордовия",
-  "RU-SA": "Республика Саха (Якутия)", "RU-SE": "Республика Северная Осетия - Алания",
-  "RU-TA": "Республика Татарстан", "RU-TY": "Республика Тыва", "RU-UD": "Удмуртская Республика",
-  "RU-KK": "Республика Хакасия", "RU-CE": "Чеченская Республика", "RU-CU": "Чувашская Республика",
-  "RU-ALT": "Алтайский край", "RU-ZAB": "Забайкальский край", "RU-KAM": "Камчатский край",
-  "RU-KDA": "Краснодарский край", "RU-KYA": "Красноярский край", "RU-PER": "Пермский край",
-  "RU-PRI": "Приморский край", "RU-STA": "Ставропольский край", "RU-KHA": "Хабаровский край",
-  "RU-AMU": "Амурская область", "RU-ARK": "Архангельская область", "RU-AST": "Астраханская область",
-  "RU-BEL": "Белгородская область", "RU-BRY": "Брянская область", "RU-VLA": "Владимирская область",
-  "RU-VGG": "Волгоградская область", "RU-VLG": "Вологодская область", "RU-VOR": "Воронежская область",
-  "RU-IVA": "Ивановская область", "RU-IRK": "Иркутская область", "RU-KAL": "Калининградская область",
-  "RU-KLU": "Калужская область", "RU-KEM": "Кемеровская область - Кузбасс", "RU-KIR": "Кировская область",
-  "RU-KOS": "Костромская область", "RU-KUR": "Курганская область", "RU-KRS": "Курская область",
-  "RU-LEN": "Ленинградская область", "RU-LIP": "Липецкая область", "RU-MAG": "Магаданская область",
-  "RU-MOS": "Московская область", "RU-MUR": "Мурманская область", "RU-NIZ": "Нижегородская область",
-  "RU-NGR": "Новгородская область", "RU-NVS": "Новосибирская область", "RU-OMS": "Омская область",
-  "RU-ORE": "Оренбургская область", "RU-ORL": "Орловская область", "RU-PNZ": "Пензенская область",
-  "RU-PSK": "Псковская область", "RU-ROS": "Ростовская область", "RU-RYA": "Рязанская область",
-  "RU-SAM": "Самарская область", "RU-SAR": "Саратовская область", "RU-SAK": "Сахалинская область",
-  "RU-SVE": "Свердловская область", "RU-SMO": "Смоленская область", "RU-TAM": "Тамбовская область",
-  "RU-TVE": "Тверская область", "RU-TOM": "Томская область", "RU-TUL": "Тульская область",
-  "RU-TYU": "Тюменская область", "RU-ULY": "Ульяновская область", "RU-CHE": "Челябинская область",
-  "RU-YAR": "Ярославская область", "RU-MOW": "Москва", "RU-SPE": "Санкт-Петербург",
-  "RU-SEV": "Севастополь", "RU-YEV": "Еврейская автономная область",
-  "RU-NEN": "Ненецкий автономный округ", "RU-KHM": "Ханты-Мансийский автономный округ - Югра",
-  "RU-CHU": "Чукотский автономный округ", "RU-YAN": "Ямало-Ненецкий автономный округ"
+// Словарь: английское название с карты -> русское название из regions.js
+const ENG_TO_RUS = {
+  "Adygea": "Республика Адыгея", "Altai": "Республика Алтай", "Bashkortostan": "Республика Башкортостан",
+  "Buryatia": "Республика Бурятия", "Dagestan": "Республика Дагестан", "Ingushetia": "Республика Ингушетия",
+  "Kabardino-Balkaria": "Кабардино-Балкарская Республика", "Kalmykia": "Республика Калмыкия",
+  "Karachay-Cherkessia": "Карачаево-Черкесская Республика", "Karelia": "Республика Карелия", "Komi": "Республика Коми",
+  "Crimea": "Республика Крым", "Mari El": "Республика Марий Эл", "Mordovia": "Республика Мордовия",
+  "Sakha": "Республика Саха (Якутия)", "Sakha (Yakutia)": "Республика Саха (Якутия)", "North Ossetia": "Республика Северная Осетия - Алания",
+  "Tatarstan": "Республика Татарстан", "Tyva": "Республика Тыва", "Udmurtia": "Удмуртская Республика",
+  "Khakassia": "Республика Хакасия", "Chechnya": "Чеченская Республика", "Chuvashia": "Чувашская Республика",
+  "Altai Krai": "Алтайский край", "Zabaykalsky Krai": "Забайкальский край", "Kamchatka Krai": "Камчатский край",
+  "Krasnodar Krai": "Краснодарский край", "Krasnoyarsk Krai": "Красноярский край", "Perm Krai": "Пермский край",
+  "Primorsky Krai": "Приморский край", "Stavropol Krai": "Ставропольский край", "Khabarovsk Krai": "Хабаровский край",
+  "Amur Oblast": "Амурская область", "Arkhangelsk Oblast": "Архангельская область", "Astrakhan Oblast": "Астраханская область",
+  "Belgorod Oblast": "Белгородская область", "Bryansk Oblast": "Брянская область", "Vladimir Oblast": "Владимирская область",
+  "Volgograd Oblast": "Волгоградская область", "Vologda Oblast": "Вологодская область", "Voronezh Oblast": "Воронежская область",
+  "Ivanovo Oblast": "Ивановская область", "Irkutsk Oblast": "Иркутская область", "Kaliningrad Oblast": "Калининградская область",
+  "Kaluga Oblast": "Калужская область", "Kemerovo Oblast": "Кемеровская область - Кузбасс", "Kirov Oblast": "Кировская область",
+  "Kostroma Oblast": "Костромская область", "Kurgan Oblast": "Курганская область", "Kursk Oblast": "Курская область",
+  "Leningrad Oblast": "Ленинградская область", "Lipetsk Oblast": "Липецкая область", "Magadan Oblast": "Магаданская область",
+  "Moscow Oblast": "Московская область", "Murmansk Oblast": "Мурманская область", "Nizhny Novgorod Oblast": "Нижегородская область",
+  "Novgorod Oblast": "Новгородская область", "Novosibirsk Oblast": "Новосибирская область", "Omsk Oblast": "Омская область",
+  "Orenburg Oblast": "Оренбургская область", "Oryol Oblast": "Орловская область", "Penza Oblast": "Пензенская область",
+  "Pskov Oblast": "Псковская область", "Rostov Oblast": "Ростовская область", "Ryazan Oblast": "Рязанская область",
+  "Samara Oblast": "Самарская область", "Saratov Oblast": "Саратовская область", "Sakhalin Oblast": "Сахалинская область",
+  "Sverdlovsk Oblast": "Свердловская область", "Smolensk Oblast": "Смоленская область", "Tambov Oblast": "Тамбовская область",
+  "Tver Oblast": "Тверская область", "Tomsk Oblast": "Томская область", "Tula Oblast": "Тульская область",
+  "Tyumen Oblast": "Тюменская область", "Ulyanovsk Oblast": "Ульяновская область", "Chelyabinsk Oblast": "Челябинская область",
+  "Yaroslavl Oblast": "Ярославская область", "Moscow": "Москва", "Saint Petersburg": "Санкт-Петербург",
+  "Sevastopol": "Севастополь", "Jewish Autonomous Oblast": "Еврейская автономная область",
+  "Nenets Autonomous Okrug": "Ненецкий автономный округ", "Khanty-Mansiysk Autonomous Okrug": "Ханты-Мансийский автономный округ - Югра",
+  "Chukotka Autonomous Okrug": "Чукотский автономный округ", "Yamalo-Nenets Autonomous Okrug": "Ямало-Ненецкий автономный округ"
 };
 
 async function loadMap() {
@@ -63,7 +61,7 @@ async function loadMap() {
       console.warn("Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Все сервера с картой недоступны. Попробуйте обновить страницу.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты.</p>';
 }
 
 loadMap();
@@ -95,26 +93,11 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  const props = feature.properties;
+  // Берем английское название с карты Highcharts
+  const engName = feature.properties.name || feature.properties.NAME || "Unknown";
   
-  // Пытаемся найти технический код (Highcharts использует hc-key)
-  let rawId = feature.id || props.id || props["hc-key"] || "";
-  rawId = rawId.toUpperCase();
-
-  let name = KEY_TO_RUS[rawId];
-  
-  // Если кода нет, пробуем взять обычное имя
-  if (!name) {
-    let rawName = props.name || props.NAME || props.NAME_1 || "";
-    if (rawName && !rawName.includes("?")) {
-      name = rawName;
-    }
-  }
-
-  // Если совсем ничего не нашли
-  if (!name) {
-    name = "Регион (" + (rawId || "без кода") + ")";
-  }
+  // Переводим на русский через словарь
+  let name = ENG_TO_RUS[engName] || engName;
 
   const data = findRegionData(name);
 
