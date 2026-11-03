@@ -6,62 +6,29 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Loading map...</p>';
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
 
-// САМАЯ НАДЕЖНАЯ КАРТА (Английские названия, стабильный сервер)
 const URLS = [
-  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json",
-  "https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/russia.js"
+  "https://hub.mos.ru/gubinmaksim/true-russian-map/-/raw/main/rus_simple_highcharts.geo.json",
+  "https://raw.githubusercontent.com/simp37/Russia_geoJSON/master/Russia.geojson",
+  "https://cdn.jsdelivr.net/gh/simp37/Russia_geoJSON@master/Russia.geojson"
 ];
-
-// Словарь для поиска данных (Английское имя -> Русское имя в твоем файле)
-const ENG_TO_RUS = {
-  "Adygea": "Республика Адыгея", "Altai": "Республика Алтай", "Bashkortostan": "Республика Башкортостан",
-  "Buryatia": "Республика Бурятия", "Dagestan": "Республика Дагестан", "Ingushetia": "Республика Ингушетия",
-  "Kabardino-Balkaria": "Кабардино-Балкарская Республика", "Kalmykia": "Республика Калмыкия",
-  "Karachay-Cherkessia": "Карачаево-Черкесская Республика", "Karelia": "Республика Карелия", "Komi": "Республика Коми",
-  "Crimea": "Республика Крым", "Mari El": "Республика Марий Эл", "Mordovia": "Республика Мордовия",
-  "Sakha": "Республика Саха (Якутия)", "Sakha (Yakutia)": "Республика Саха (Якутия)", "North Ossetia": "Республика Северная Осетия - Алания",
-  "Tatarstan": "Республика Татарстан", "Tyva": "Республика Тыва", "Udmurtia": "Удмуртская Республика",
-  "Khakassia": "Республика Хакасия", "Chechnya": "Чеченская Республика", "Chuvashia": "Чувашская Республика",
-  "Altai Krai": "Алтайский край", "Zabaykalsky Krai": "Забайкальский край", "Kamchatka Krai": "Камчатский край",
-  "Krasnodar Krai": "Краснодарский край", "Krasnoyarsk Krai": "Красноярский край", "Perm Krai": "Пермский край",
-  "Primorsky Krai": "Приморский край", "Stavropol Krai": "Ставропольский край", "Khabarovsk Krai": "Хабаровский край",
-  "Amur Oblast": "Амурская область", "Arkhangelsk Oblast": "Архангельская область", "Astrakhan Oblast": "Астраханская область",
-  "Belgorod Oblast": "Белгородская область", "Bryansk Oblast": "Брянская область", "Vladimir Oblast": "Владимирская область",
-  "Volgograd Oblast": "Волгоградская область", "Vologda Oblast": "Вологодская область", "Voronezh Oblast": "Воронежская область",
-  "Ivanovo Oblast": "Ивановская область", "Irkutsk Oblast": "Иркутская область", "Kaliningrad Oblast": "Калининградская область",
-  "Kaluga Oblast": "Калужская область", "Kemerovo Oblast": "Кемеровская область - Кузбасс", "Kirov Oblast": "Кировская область",
-  "Kostroma Oblast": "Костромская область", "Kurgan Oblast": "Курганская область", "Kursk Oblast": "Курская область",
-  "Leningrad Oblast": "Ленинградская область", "Lipetsk Oblast": "Липецкая область", "Magadan Oblast": "Магаданская область",
-  "Moscow Oblast": "Московская область", "Murmansk Oblast": "Мурманская область", "Nizhny Novgorod Oblast": "Нижегородская область",
-  "Novgorod Oblast": "Новгородская область", "Novosibirsk Oblast": "Новосибирская область", "Omsk Oblast": "Омская область",
-  "Orenburg Oblast": "Оренбургская область", "Oryol Oblast": "Орловская область", "Penza Oblast": "Пензенская область",
-  "Pskov Oblast": "Псковская область", "Rostov Oblast": "Ростовская область", "Ryazan Oblast": "Рязанская область",
-  "Samara Oblast": "Самарская область", "Saratov Oblast": "Саратовская область", "Sakhalin Oblast": "Сахалинская область",
-  "Sverdlovsk Oblast": "Свердловская область", "Smolensk Oblast": "Смоленская область", "Tambov Oblast": "Тамбовская область",
-  "Tver Oblast": "Тверская область", "Tomsk Oblast": "Томская область", "Tula Oblast": "Тульская область",
-  "Tyumen Oblast": "Тюменская область", "Ulyanovsk Oblast": "Ульяновская область", "Chelyabinsk Oblast": "Челябинская область",
-  "Yaroslavl Oblast": "Ярославская область", "Moscow": "Москва", "Saint Petersburg": "Санкт-Петербург",
-  "Sevastopol": "Севастополь", "Jewish Autonomous Oblast": "Еврейская автономная область",
-  "Nenets Autonomous Okrug": "Ненецкий автономный округ", "Khanty-Mansiysk Autonomous Okrug": "Ханты-Мансийский автономный округ - Югра",
-  "Chukotka Autonomous Okrug": "Чукотский автономный округ", "Yamalo-Nenets Autonomous Okrug": "Ямало-Ненецкий автономный округ"
-};
 
 async function loadMap() {
   for (let url of URLS) {
     try {
       const response = await fetch(url);
       if (!response.ok) continue;
+      
       const geojson = await response.json();
       mapEl.innerHTML = '';
       drawMap(geojson);
       return; 
     } catch (e) {
-      console.warn("Failed URL:", url);
+      console.warn("Ошибка при загрузке:", e.message);
     }
   }
-  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Error loading map.</p>';
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты.</p>';
 }
 
 loadMap();
@@ -75,7 +42,8 @@ function drawMap(geojson) {
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // Поворот для идеального отображения
+    // ФИКС: Поворачиваем проекцию на -100 градусов, чтобы Россия была по центру,
+    // а Камчатка не улетала в Америку.
     const projection = d3.geoMercator()
       .rotate([-100, 0]) 
       .fitExtent([[40, 40], [width - 40, height - 40]], geojson);
@@ -94,21 +62,14 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  // Берем английское название (например, "Moscow")
-  const engName = feature.properties.name || "Unknown";
-  
-  // Ищем русский ключ для файла regions.js
-  const rusName = ENG_TO_RUS[engName] || engName; 
-  
-  // Ищем данные
-  const data = findRegionData(rusName);
+  const name = feature.properties.name || feature.properties.NAME_1 || "Неизвестный регион";
+  const data = findRegionData(name);
 
   if (activePath) activePath.classList.remove("active");
   pathElement.classList.add("active");
   activePath = pathElement;
 
-  // Выводим английское название на экран
-  renderPanel(engName, data);
+  renderPanel(name, data);
   openPanel();
 }
 
@@ -136,27 +97,26 @@ function renderPanel(name, data) {
   if (!data) {
     panelContent.innerHTML = `
       <h2>${escapeHtml(name)}</h2>
-      <p style="color:var(--text-dim);margin-top:1rem">No data available.</p>
+      <p style="color:var(--text-dim);margin-top:1rem">Данные по этому региону уточняются.</p>
     `;
     return;
   }
 
-  const population = data.population ? formatNumber(data.population) : "—";
-  const area = data.area ? formatNumber(data.area) : "—";
-  const density = data.population && data.area ? (data.population / data.area).toFixed(1) : "—";
+  const population = data.population ? formatNumber(data.population) + " чел." : "—";
+  const area = data.area ? formatNumber(data.area) + " км²" : "—";
+  const density = data.population && data.area ? (data.population / data.area).toFixed(1) + " чел./км²" : "—";
 
-  // В панели пишем на английском
   panelContent.innerHTML = `
     <h2>${escapeHtml(name)}</h2>
-    <span class="region-type">${escapeHtml(data.type || "Region")}</span>
+    <span class="region-type">${escapeHtml(data.type || "Регион")}</span>
     <div class="stat-grid">
-      <div class="stat-card"><div class="label">Population</div><div class="value">${population}</div></div>
-      <div class="stat-card"><div class="label">Area</div><div class="value">${area} km²</div></div>
-      <div class="stat-card"><div class="label">Density</div><div class="value">${density}</div></div>
+      <div class="stat-card"><div class="label">Население</div><div class="value">${population}</div></div>
+      <div class="stat-card"><div class="label">Площадь</div><div class="value">${area}</div></div>
+      <div class="stat-card"><div class="label">Плотность</div><div class="value">${density}</div></div>
     </div>
-    <div class="info-row"><span class="info-label">Capital</span><span class="info-value">${escapeHtml(data.capital || "—")}</span></div>
-    <div class="info-row"><span class="info-label">District</span><span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span></div>
-    <div class="info-row"><span class="info-label">Law</span><span class="info-value">${escapeHtml(data.law || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Административный центр</span><span class="info-value">${escapeHtml(data.capital || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Федеральный округ</span><span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Основной закон</span><span class="info-value">${escapeHtml(data.law || "—")}</span></div>
   `;
 }
 
