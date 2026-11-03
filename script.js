@@ -6,12 +6,15 @@ const closeBtn = document.getElementById("close-panel");
 
 let activePath = null;
 
-mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Загрузка карты...</p>';
+mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #9aa0a6;">Loading map...</p>';
 
-// ТА САМАЯ КАРТА ОТ HIGHCHARTS
-const MAP_URL = "https://code.highcharts.com/mapdata/countries/ru/ru-all.geo.json";
+// САМАЯ НАДЕЖНАЯ КАРТА (Английские названия, стабильный сервер)
+const URLS = [
+  "https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/russia.json",
+  "https://raw.githubusercontent.com/echarts-maps/echarts-countries-js/master/echarts-countries-js/russia.js"
+];
 
-// Словарь перевода английских названий с карты в русские (как в regions.js)
+// Словарь для поиска данных (Английское имя -> Русское имя в твоем файле)
 const ENG_TO_RUS = {
   "Adygea": "Республика Адыгея", "Altai": "Республика Алтай", "Bashkortostan": "Республика Башкортостан",
   "Buryatia": "Республика Бурятия", "Dagestan": "Республика Дагестан", "Ingushetia": "Республика Ингушетия",
@@ -46,17 +49,19 @@ const ENG_TO_RUS = {
 };
 
 async function loadMap() {
-  try {
-    const response = await fetch(MAP_URL);
-    if (!response.ok) throw new Error("Сеть");
-    
-    const geojson = await response.json();
-    mapEl.innerHTML = '';
-    drawMap(geojson);
-  } catch (e) {
-    console.error(e);
-    mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Ошибка загрузки карты. Обновите страницу.</p>';
+  for (let url of URLS) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) continue;
+      const geojson = await response.json();
+      mapEl.innerHTML = '';
+      drawMap(geojson);
+      return; 
+    } catch (e) {
+      console.warn("Failed URL:", url);
+    }
   }
+  mapEl.innerHTML = '<p style="padding: 2rem; text-align: center; color: #ff6b6b;">Error loading map.</p>';
 }
 
 loadMap();
@@ -70,7 +75,7 @@ function drawMap(geojson) {
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // Поворот, который тебе понравился
+    // Поворот для идеального отображения
     const projection = d3.geoMercator()
       .rotate([-100, 0]) 
       .fitExtent([[40, 40], [width - 40, height - 40]], geojson);
@@ -89,21 +94,21 @@ function drawMap(geojson) {
 }
 
 function selectRegion(feature, pathElement) {
-  const props = feature.properties;
+  // Берем английское название (например, "Moscow")
+  const engName = feature.properties.name || "Unknown";
   
-  // Берем английское название с карты (например, Moscow)
-  let rawName = props.name || "";
+  // Ищем русский ключ для файла regions.js
+  const rusName = ENG_TO_RUS[engName] || engName; 
   
-  // Переводим на русский
-  let name = ENG_TO_RUS[rawName] || rawName;
-
-  const data = findRegionData(name);
+  // Ищем данные
+  const data = findRegionData(rusName);
 
   if (activePath) activePath.classList.remove("active");
   pathElement.classList.add("active");
   activePath = pathElement;
 
-  renderPanel(name, data);
+  // Выводим английское название на экран
+  renderPanel(engName, data);
   openPanel();
 }
 
@@ -131,26 +136,27 @@ function renderPanel(name, data) {
   if (!data) {
     panelContent.innerHTML = `
       <h2>${escapeHtml(name)}</h2>
-      <p style="color:var(--text-dim);margin-top:1rem">Данные по этому региону уточняются.</p>
+      <p style="color:var(--text-dim);margin-top:1rem">No data available.</p>
     `;
     return;
   }
 
-  const population = data.population ? formatNumber(data.population) + " чел." : "—";
-  const area = data.area ? formatNumber(data.area) + " км²" : "—";
-  const density = data.population && data.area ? (data.population / data.area).toFixed(1) + " чел./км²" : "—";
+  const population = data.population ? formatNumber(data.population) : "—";
+  const area = data.area ? formatNumber(data.area) : "—";
+  const density = data.population && data.area ? (data.population / data.area).toFixed(1) : "—";
 
+  // В панели пишем на английском
   panelContent.innerHTML = `
     <h2>${escapeHtml(name)}</h2>
-    <span class="region-type">${escapeHtml(data.type || "Регион")}</span>
+    <span class="region-type">${escapeHtml(data.type || "Region")}</span>
     <div class="stat-grid">
-      <div class="stat-card"><div class="label">Население</div><div class="value">${population}</div></div>
-      <div class="stat-card"><div class="label">Площадь</div><div class="value">${area}</div></div>
-      <div class="stat-card"><div class="label">Плотность</div><div class="value">${density}</div></div>
+      <div class="stat-card"><div class="label">Population</div><div class="value">${population}</div></div>
+      <div class="stat-card"><div class="label">Area</div><div class="value">${area} km²</div></div>
+      <div class="stat-card"><div class="label">Density</div><div class="value">${density}</div></div>
     </div>
-    <div class="info-row"><span class="info-label">Административный центр</span><span class="info-value">${escapeHtml(data.capital || "—")}</span></div>
-    <div class="info-row"><span class="info-label">Федеральный округ</span><span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span></div>
-    <div class="info-row"><span class="info-label">Основной закон</span><span class="info-value">${escapeHtml(data.law || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Capital</span><span class="info-value">${escapeHtml(data.capital || "—")}</span></div>
+    <div class="info-row"><span class="info-label">District</span><span class="info-value">${escapeHtml(data.federalDistrict || "—")}</span></div>
+    <div class="info-row"><span class="info-label">Law</span><span class="info-value">${escapeHtml(data.law || "—")}</span></div>
   `;
 }
 
